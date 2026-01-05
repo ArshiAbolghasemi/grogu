@@ -1,0 +1,253 @@
+version: "2"
+run:
+  concurrency: 4
+  go: "1.25"
+  modules-download-mode: readonly
+  issues-exit-code: 1
+  tests: true
+  allow-parallel-runners: true
+linters:
+  default: all
+  disable:
+    - depguard
+    - exhaustruct
+    - gochecknoglobals
+    - gochecknoinits
+    - godot
+    - ireturn
+    - nlreturn
+    - paralleltest
+    - revive
+    - tagliatelle
+    - wrapcheck
+    - wsl
+    - testpackage
+  settings:
+    cyclop:
+      max-complexity: 10
+    dogsled:
+      max-blank-identifiers: 2
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: false
+      check-blank: false
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    exhaustive:
+      default-signifies-exhaustive: false
+    forbidigo:
+      forbid:
+        - pattern: ^print$
+        - pattern: ^fmt\.Print.*
+        - pattern: ^grpc\.(Header|Trailer)$
+    funlen:
+      lines: 90
+      statements: 40
+    gocognit:
+      min-complexity: 10
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      disabled-checks:
+        - regexpMust
+      enabled-tags:
+        - performance
+        - diagnostic
+        - style
+      disabled-tags:
+        - experimental
+      settings:
+        captLocal:
+          paramsOnly: true
+        elseif:
+          skipBalanced: true
+        hugeParam:
+          sizeThreshold: 80
+        rangeExprCopy:
+          sizeThreshold: 512
+          skipTestFuncs: true
+        rangeValCopy:
+          sizeThreshold: 32
+          skipTestFuncs: true
+        underef:
+          skipRecvDeref: true
+    gocyclo:
+      min-complexity: 10
+    godot:
+      scope: all
+      capital: false
+    godox:
+      keywords:
+        - NOTE
+        - OPTIMIZE
+        - HACK
+    gomoddirectives:
+      replace-local: false
+      exclude-forbidden: false
+      retract-allow-no-explanation: false
+    gomodguard:
+      blocked:
+        local-replace-directives: false
+    govet:
+      enable:
+        - atomicalign
+      disable:
+        - shadow
+      enable-all: false
+      disable-all: false
+      settings:
+        printf:
+          funcs:
+            - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+            - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+            - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+            - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+    importas:
+      no-unaliased: true
+    lll:
+      line-length: 120
+      tab-width: 1
+    makezero:
+      always: false
+    misspell:
+      locale: US
+    mnd:
+      checks:
+        - argument
+        - case
+        - condition
+        - operation
+        - return
+        - assign
+    nakedret:
+      max-func-lines: 30
+    nestif:
+      min-complexity: 4
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-unused: false
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: false
+    promlinter:
+      strict: false
+    tagliatelle:
+      case:
+        rules:
+          avro: snake
+          bson: camel
+          json: camel
+          mapstructure: kebab
+          xml: camel
+          yaml: camel
+        use-field-name: true
+    thelper:
+      test:
+        first: true
+        name: true
+        begin: true
+      benchmark:
+        first: true
+        name: true
+        begin: true
+      tb:
+        first: true
+        name: true
+        begin: true
+    unparam:
+      check-exported: false
+    whitespace:
+      multi-if: false
+      multi-func: false
+    wrapcheck:
+      ignore-sigs:
+        - .Errorf(
+        - errors.New(
+        - errors.Unwrap(
+        - .Wrap(
+        - .Wrapf(
+        - .WithMessage(
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - gochecknoinits
+        path: config/config.go
+      - linters:
+          - gocritic
+        path: internal/logging/zapconsole/formatter.go
+      - linters:
+          - cyclop
+          - gocognit
+          - gocyclo
+        path: internal/logging/zapconsole/zapconsole.go
+      - linters:
+          - cyclop
+          - gocognit
+          - godox
+          - dupl
+          - errcheck
+          - gocyclo
+          - gosec
+          - funlen
+          - forbidigo
+          - maintidx
+        path: test.*\.go
+      - linters:
+          - gosec
+          - gocritic
+          - noctx
+        path: cmd/migrate-generate/main.go
+      - linters:
+          - gocritic
+        path: cmd/migrate-apply/main.go
+      - linters:
+          - lll
+        source: '^//go:generate '
+      - path: (.+)\.go$
+        text: 'require-error: for error assertions use require'
+      - path: (.+)\.go$
+        text: avoid direct access to proto field
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  uniq-by-line: true
+  new: false
+  fix: false
+severity:
+  default: error
+  rules:
+    - linters:
+        - dupl
+      severity: info
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    gofumpt:
+      extra-rules: false
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

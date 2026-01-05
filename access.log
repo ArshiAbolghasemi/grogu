@@ -1,0 +1,287 @@
+{"level":"info","ts":"2026-01-04T17:51:43.414+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:51:43.415+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:51:43.415+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:51:43.429+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:51:43.441+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:51:43.441+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:51:43.441+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:51:43.442+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T17:51:50.288+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 17:51:50.190405 +0330 +0330","start_processing":"2026-01-04 17:51:50.288043512 +0330 +0330 m=+6.901930220"}
+{"level":"info","ts":"2026-01-04T17:51:50.295+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:51:50.295+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T17:51:50.772+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T17:51:50.772+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T17:51:50.776+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:51:50.776+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T17:51:50.776+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:51:50.776+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T17:51:53.298+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:54:14.021+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:54:14.021+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:54:14.021+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:54:14.036+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:54:14.049+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:54:14.050+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:54:14.050+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:54:14.050+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T17:54:18.366+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 17:54:18.274547 +0330 +0330","start_processing":"2026-01-04 17:54:18.366049093 +0330 +0330 m=+4.375660478"}
+{"level":"info","ts":"2026-01-04T17:54:18.372+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:54:18.372+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T17:54:18.846+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T17:54:18.846+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T17:54:18.849+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:54:18.850+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T17:54:18.850+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:54:18.850+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T17:54:21.373+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:54:28.865+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:54:28.865+0330","caller":"healthchecker/service.go:77","msg":"database service back healthy"}
+{"level":"info","ts":"2026-01-04T17:54:28.878+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:54:28.878+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:54:28.878+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:54:28.891+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:54:28.905+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:54:28.905+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:54:28.905+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:54:28.905+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"error","ts":"2026-01-04T17:54:28.905+0330","caller":"prometheus/service.go:33","msg":"failed to start prometheus server","error":"listen tcp :2112: bind: address already in use"}
+{"level":"info","ts":"2026-01-04T17:55:07.998+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 17:55:07.907328 +0330 +0330","start_processing":"2026-01-04 17:55:07.998244505 +0330 +0330 m=+54.007855887"}
+{"level":"info","ts":"2026-01-04T17:55:08.005+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:55:08.006+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T17:55:08.485+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T17:55:08.485+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T17:55:08.487+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:55:08.487+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T17:55:08.488+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:55:08.488+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T17:55:11.008+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:55:18.503+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:55:18.503+0330","caller":"healthchecker/service.go:77","msg":"database service back healthy"}
+{"level":"info","ts":"2026-01-04T17:55:18.514+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:55:18.514+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:55:18.514+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:55:18.527+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:55:18.540+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:55:18.540+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:55:18.540+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:55:18.540+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"error","ts":"2026-01-04T17:55:18.540+0330","caller":"prometheus/service.go:33","msg":"failed to start prometheus server","error":"listen tcp :2112: bind: address already in use"}
+{"level":"info","ts":"2026-01-04T17:56:18.550+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T17:57:18.544+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T17:57:25.174+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:57:25.174+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:57:25.174+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:57:25.188+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:57:25.204+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:57:25.204+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:57:25.204+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:57:25.204+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T17:57:38.616+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 17:57:38.51026 +0330 +0330","start_processing":"2026-01-04 17:57:38.616010416 +0330 +0330 m=+13.474326519"}
+{"level":"info","ts":"2026-01-04T17:57:38.621+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:57:38.621+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T17:57:39.097+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T17:57:39.097+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T17:57:39.101+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:57:39.101+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T17:57:39.101+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:57:39.101+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T17:57:41.623+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:57:58.898+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:57:58.898+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:57:58.898+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:57:58.912+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:57:58.925+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:57:58.925+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:57:58.925+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:57:58.925+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T17:57:59.067+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 17:57:55.574019 +0330 +0330","start_processing":"2026-01-04 17:57:59.067821025 +0330 +0330 m=+0.199693549"}
+{"level":"info","ts":"2026-01-04T17:57:59.829+0330","caller":"telc/service.go:98","msg":"Call Info response","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","status_code":200,"response_body":"{\"message\":\"{\\\"reasons\\\":[]}\",\"errorCode\":\"SUCCESSFUL\"}"}
+{"level":"info","ts":"2026-01-04T17:58:04.627+0330","caller":"telc/service.go:184","msg":"Voice call response document","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","status_code":200,"content_length":589013}
+{"level":"info","ts":"2026-01-04T17:58:04.646+0330","caller":"minio/service.go:159","msg":"Starting MinIO upload","object_key":"e21b089c-f736-4af6-94d0-e30492e7ba4d","buffer_size":609525}
+{"level":"info","ts":"2026-01-04T17:58:08.541+0330","caller":"minio/service.go:226","msg":"MinIO upload completed successfully","object_key":"e21b089c-f736-4af6-94d0-e30492e7ba4d","url":"minio.mci.dev/coa-analysis-prod/e21b089c-f736-4af6-94d0-e30492e7ba4d"}
+{"level":"info","ts":"2026-01-04T17:58:08.541+0330","caller":"asr/service.go:80","msg":"Starting voice transcription","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","buffer_size":609525}
+{"level":"info","ts":"2026-01-04T17:58:54.716+0330","caller":"asr/service.go:126","msg":"Transcription completed successfully","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","text_length":14829}
+{"level":"info","ts":"2026-01-04T17:58:54.717+0330","caller":"call/service.go:217","msg":"voice file transacription fetched successfully","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d"}
+{"level":"info","ts":"2026-01-04T17:58:54.724+0330","caller":"call/repository.go:167","msg":"Call did not exist, so it was created.","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d"}
+{"level":"info","ts":"2026-01-04T17:58:54.739+0330","caller":"grogu/worker.go:163","msg":"message processed successfully","platform":"Telc","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","partition":0,"offset":13}
+{"level":"info","ts":"2026-01-04T17:59:14.964+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:59:14.964+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:59:14.964+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:59:14.979+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:59:14.993+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:59:14.994+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:59:14.994+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:59:14.994+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T17:59:15.140+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 17:59:07.431118 +0330 +0330","start_processing":"2026-01-04 17:59:15.140323823 +0330 +0330 m=+0.205174572"}
+{"level":"info","ts":"2026-01-04T17:59:15.145+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:59:15.145+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T17:59:15.629+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T17:59:15.629+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T17:59:15.631+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:59:15.631+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T17:59:15.632+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T17:59:15.632+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T17:59:18.147+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T17:59:25.647+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:59:25.647+0330","caller":"healthchecker/service.go:77","msg":"database service back healthy"}
+{"level":"info","ts":"2026-01-04T17:59:25.661+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T17:59:25.661+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T17:59:25.661+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T17:59:25.678+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:59:25.693+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T17:59:25.693+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T17:59:25.693+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T17:59:25.694+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"error","ts":"2026-01-04T17:59:25.694+0330","caller":"prometheus/service.go:33","msg":"failed to start prometheus server","error":"listen tcp :2112: bind: address already in use"}
+{"level":"info","ts":"2026-01-04T18:01:09.658+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:01:09.658+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:01:09.658+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:01:09.670+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:01:09.686+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:01:09.686+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:01:09.686+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:01:09.686+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T18:01:09.832+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 18:01:02.180975 +0330 +0330","start_processing":"2026-01-04 18:01:09.832664073 +0330 +0330 m=+0.203249699"}
+{"level":"info","ts":"2026-01-04T18:01:09.839+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:01:09.839+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T18:01:10.321+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T18:01:10.321+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T18:01:10.324+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:01:10.324+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T18:01:10.324+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:01:10.325+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T18:01:12.840+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:04:28.590+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:04:28.590+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:04:28.590+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:04:28.605+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:04:28.622+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:04:28.622+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:04:28.622+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:04:28.623+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T18:04:34.341+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 18:04:34.248956 +0330 +0330","start_processing":"2026-01-04 18:04:34.341915175 +0330 +0330 m=+5.779597773"}
+{"level":"info","ts":"2026-01-04T18:04:34.347+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:04:34.347+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T18:04:34.826+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T18:04:34.826+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T18:04:34.828+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:04:34.829+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T18:04:34.829+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:04:34.829+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T18:04:37.349+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:04:44.843+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:04:44.843+0330","caller":"healthchecker/service.go:77","msg":"database service back healthy"}
+{"level":"info","ts":"2026-01-04T18:04:44.857+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:04:44.857+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:04:44.857+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:04:44.870+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:04:44.883+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:04:44.883+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:04:44.883+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:04:44.884+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"error","ts":"2026-01-04T18:04:44.884+0330","caller":"prometheus/service.go:33","msg":"failed to start prometheus server","error":"listen tcp :2112: bind: address already in use"}
+{"level":"info","ts":"2026-01-04T18:05:44.894+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:07:03.284+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:07:03.284+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:07:03.284+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:07:03.299+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:07:03.311+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:07:03.311+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:07:03.311+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:07:03.311+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T18:07:03.457+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 18:06:55.639001 +0330 +0330","start_processing":"2026-01-04 18:07:03.457466947 +0330 +0330 m=+0.203201782"}
+{"level":"info","ts":"2026-01-04T18:07:03.462+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:07:03.462+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T18:07:03.946+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T18:07:03.947+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T18:07:03.949+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:07:03.949+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T18:07:03.949+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:07:03.950+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T18:07:06.464+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:07:13.964+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:07:13.964+0330","caller":"healthchecker/service.go:77","msg":"database service back healthy"}
+{"level":"info","ts":"2026-01-04T18:07:13.978+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:07:13.978+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:07:13.978+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:07:13.992+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:07:14.006+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:07:14.006+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:07:14.006+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:07:14.007+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"error","ts":"2026-01-04T18:07:14.007+0330","caller":"prometheus/service.go:33","msg":"failed to start prometheus server","error":"listen tcp :2112: bind: address already in use"}
+{"level":"info","ts":"2026-01-04T18:09:10.393+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:09:10.394+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:09:10.394+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:09:10.406+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:09:10.420+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:09:10.420+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:09:10.420+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:09:10.420+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-04T18:09:10.565+0330","caller":"call/service.go:176","msg":"Processing TelC Call record","call_id":"e21b089c-f736-4af6-94d0-e30492e7ba4d","created_at":"2026-01-04 18:08:55.128837 +0330 +0330","start_processing":"2026-01-04 18:09:10.565151874 +0330 +0330 m=+0.206449260"}
+{"level":"info","ts":"2026-01-04T18:09:10.570+0330","caller":"database/service.go:81","msg":"Circuit state changed","service":"database","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:09:10.570+0330","caller":"healthchecker/service.go:35","msg":"circuit break happened","service":"database"}
+{"level":"info","ts":"2026-01-04T18:09:11.053+0330","caller":"kafka/config.go:93","msg":"Kafka consumer stopping (context canceled)","consumer":"Telc","error":"context canceled"}
+{"level":"info","ts":"2026-01-04T18:09:11.053+0330","caller":"grogu/app.go:127","msg":"Closing Telc Kafka consumer..."}
+{"level":"info","ts":"2026-01-04T18:09:11.056+0330","caller":"kafka/consumer.go:50","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:09:11.056+0330","caller":"grogu/app.go:151","msg":"Closing Kafka producer..."}
+{"level":"info","ts":"2026-01-04T18:09:11.056+0330","caller":"kafka/producer.go:103","msg":"Kafka producer closed successfully"}
+{"level":"info","ts":"2026-01-04T18:09:11.056+0330","caller":"grogu/app.go:158","msg":"App shutdown complete"}
+{"level":"info","ts":"2026-01-04T18:09:13.572+0330","caller":"telc/service.go:61","msg":"Circuit state changed","service":"TelC","from":"closed","to":"open"}
+{"level":"info","ts":"2026-01-04T18:09:21.072+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:09:21.072+0330","caller":"healthchecker/service.go:77","msg":"database service back healthy"}
+{"level":"info","ts":"2026-01-04T18:09:21.085+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-04T18:09:21.085+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-04T18:09:21.085+0330","caller":"grogu/app.go:55","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-04T18:09:21.096+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:09:21.110+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-04T18:09:21.110+0330","caller":"grogu/app.go:118","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-04T18:09:21.110+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-04T18:09:21.111+0330","caller":"prometheus/service.go:29","msg":"trying start prometheus server on port 2112"}
+{"level":"error","ts":"2026-01-04T18:09:21.111+0330","caller":"prometheus/service.go:33","msg":"failed to start prometheus server","error":"listen tcp :2112: bind: address already in use"}
+{"level":"info","ts":"2026-01-04T18:10:21.125+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:11:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:12:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:13:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:14:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:15:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:16:21.112+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:17:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:18:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:19:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:20:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:21:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:22:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:23:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:24:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:25:21.112+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:26:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:27:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:28:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:29:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:30:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:31:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:32:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:33:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:34:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:35:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:36:21.114+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:37:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:38:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:39:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-04T18:40:21.113+0330","caller":"deadletter/worker.go:59","msg":"no dl calls are existed"}
+{"level":"info","ts":"2026-01-05T11:53:14.188+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-05T11:53:14.188+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-05T11:53:14.188+0330","caller":"grogu/app.go:54","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-05T11:53:14.214+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-05T11:53:14.225+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-05T11:53:14.225+0330","caller":"grogu/app.go:116","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-05T11:53:14.226+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
+{"level":"info","ts":"2026-01-05T11:54:02.132+0330","caller":"prometheus/service.go:29","msg":"start prometheus server on port 2112"}
+{"level":"info","ts":"2026-01-05T11:54:02.138+0330","caller":"database/service.go:43","msg":"Successfully connected to Postgres"}
+{"level":"info","ts":"2026-01-05T11:54:02.138+0330","caller":"minio/service.go:68","msg":"Successfully connected to MinIO","platform":"Telc","endpoint":"minio.mci.dev","bucket":"coa-analysis-prod"}
+{"level":"info","ts":"2026-01-05T11:54:02.138+0330","caller":"grogu/app.go:54","msg":"Initializing Kafka consumers for platform","platform":"Telc"}
+{"level":"info","ts":"2026-01-05T11:54:02.145+0330","caller":"kafka/config.go:56","msg":"Successfully connected to Kafka","consumer":"Telc","bootstrap":"localhost:9093","group_id":"asr_call_group","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-05T11:54:02.152+0330","caller":"kafka/producer.go:49","msg":"Successfully connected to Kafka producer","bootstrap":"localhost:9093","mechanism":"SCRAM-SHA-512"}
+{"level":"info","ts":"2026-01-05T11:54:02.152+0330","caller":"grogu/app.go:116","msg":"Starting Telc Kafka consumer","topic":"call-asr"}
+{"level":"info","ts":"2026-01-05T11:54:02.152+0330","caller":"healthchecker/service.go:31","msg":"health checker monitor start successfully"}
