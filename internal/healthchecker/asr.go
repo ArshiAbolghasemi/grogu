@@ -8,7 +8,7 @@ import (
 
 var monitorCallID = "monitor_call_id"
 
-func CheckASR() bool {
+func CheckASR() error {
 	buffer := readTestFile()
 
 	asrClient := asr.NewClient()
@@ -18,5 +18,5 @@ func CheckASR() bool {
 
 	_, err := asrClient.GetVoiceTranscriptions(ctx, buffer, monitorCallID)
 
-	return err == nil
+	return err
 }

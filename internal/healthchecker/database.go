@@ -4,7 +4,7 @@ import (
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/database"
 )
 
-func CheckDB() bool {
+func CheckDB() error {
 	_, err := database.NewDatabase()
-	return err == nil
+	return err
 }

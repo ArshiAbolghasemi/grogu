@@ -105,40 +105,11 @@ func (telcService *TelCService) GetCallInfo(ctx context.Context, callID string) 
 		return nil, ErrGetFileInfoRequest
 	}
 
-	var response telCCallInfoResponse
-
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		return nil, err
-	}
-
-	var raw telCCallInfoRaw
-
-	err = json.Unmarshal([]byte(response.Message), &raw)
-	if err != nil {
-		return nil, err
-	}
-
-	start, err := parseTelCTime(raw.StartTime)
-	if err != nil {
-		return nil, err
-	}
-
-	end, err := parseTelCTime(raw.EndTime)
-	if err != nil {
-		return nil, err
-	}
-
-	return &TelCCallInfo{
-		CallID:    raw.CallID,
-		StartTime: start,
-		EndTime:   end,
-		Reasons:   raw.Reasons,
-	}, nil
+	return telcService.parseCallInfoResponse(body)
 }
 
 var (
-	telcLayout = "2006-01-02 15:04:05.000"
+	telcLayout = "2006-01-02 15:04:05.999"
 	tehranLoc  *time.Location
 )
 
@@ -152,10 +123,6 @@ func init() {
 }
 
 func parseTelCTime(s string) (*time.Time, error) {
-	if s == "" {
-		return &time.Time{}, nil
-	}
-
 	t, err := time.ParseInLocation(telcLayout, s, tehranLoc)
 	if err != nil {
 		return nil, err
@@ -194,6 +161,60 @@ func (telcService *TelCService) GetVoiceCall(ctx context.Context, callID string)
 	return telcService.unzipVoiceFile(content, callID)
 }
 
+// parseCallInfoResponse parses the TelC API response into TelCCallInfo
+func (telcService *TelCService) parseCallInfoResponse(body []byte) (*TelCCallInfo, error) {
+	var response telCCallInfoResponse
+
+	err := json.Unmarshal(body, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw telCCallInfoRaw
+
+	err = json.Unmarshal([]byte(response.Message), &raw)
+	if err != nil {
+		return nil, err
+	}
+
+	start, end, err := telcService.parseCallTimes(raw.StartTime, raw.EndTime)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TelCCallInfo{
+		CallID:    raw.CallID,
+		StartTime: start,
+		EndTime:   end,
+		Reasons:   raw.Reasons,
+	}, nil
+}
+
+// parseCallTimes parses start and end time strings into time pointers
+func (telcService *TelCService) parseCallTimes(startTimeStr, endTimeStr string) (*time.Time, *time.Time, error) {
+	var start, end *time.Time
+
+	if startTimeStr != "" {
+		var err error
+
+		start, err = parseTelCTime(startTimeStr)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if endTimeStr != "" {
+		var err error
+
+		end, err = parseTelCTime(endTimeStr)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return start, end, nil
+}
+
 func (telcService *TelCService) doTelCRequestWithRetry(
 	ctx context.Context,
 	apiUrl string,
@@ -210,6 +231,12 @@ func (telcService *TelCService) doTelCRequestWithRetry(
 				var err error
 
 				body, statusCode, err = telcService.doTelCRequest(ctx, apiUrl, reqBody)
+
+				logging.Logger.Info("TelC request completed",
+					zap.String("api_url", apiUrl),
+					zap.Int("status_code", statusCode),
+					zap.ByteString("response_body", body),
+				)
 
 				return err
 			},
@@ -275,6 +302,12 @@ func (telcService *TelCService) doTelCRequest(ctx context.Context, apiUrl string
 	if err != nil {
 		return nil, resp.StatusCode, err
 	}
+
+	logging.Logger.Info("TelC HTTP request",
+		zap.String("api_url", apiUrl),
+		zap.Int("status_code", resp.StatusCode),
+		zap.ByteString("response_body", body),
+	)
 
 	return body, resp.StatusCode, nil
 }

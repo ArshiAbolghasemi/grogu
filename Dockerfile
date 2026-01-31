@@ -31,5 +31,6 @@ COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENV GIN_MODE=release
+EXPOSE 2112
 
 ENTRYPOINT ["/app/entrypoint.sh"]

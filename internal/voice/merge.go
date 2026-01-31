@@ -133,7 +133,7 @@ func (s *MergeService) createTempFiles(callID string) (*os.File, *os.File, strin
 		return nil, nil, "", fmt.Errorf("failed to create temp file for agent: %w", err)
 	}
 
-	outputFile := filepath.Join(s.TempDir, fmt.Sprintf("merged_%s.ogg", callID))
+	outputFile := filepath.Join(s.TempDir, fmt.Sprintf("merged_%s.mp3", callID))
 
 	return participantFile, agentFile, outputFile, nil
 }
@@ -186,6 +186,7 @@ func (s *MergeService) runFFmpegMerge(participantPath, agentPath, outputFile, ca
 
 	// Use ffmpeg to merge: participant on left channel, agent on right channel
 	// Both inputs are stereo, so we downmix each to mono (taking left channel)
+	// Then use 'join' filter to place participant on FL (left) and agent on FR (right)
 	participant := ffmpeg.Input(participantPath).Filter("pan", ffmpeg.Args{"mono|c0=FL"})
 	agent := ffmpeg.Input(agentPath).Filter("pan", ffmpeg.Args{"mono|c0=FL"})
 
@@ -194,10 +195,10 @@ func (s *MergeService) runFFmpegMerge(participantPath, agentPath, outputFile, ca
 
 	err := ffmpeg.Filter(
 		[]*ffmpeg.Stream{participant, agent},
-		"amerge",
-		ffmpeg.Args{"inputs=2"},
+		"join",
+		ffmpeg.Args{"inputs=2:channel_layout=stereo:map=0.0-FL|1.0-FR"},
 	).Output(outputFile, ffmpeg.KwArgs{
-		"c:a": "libopus",
+		"c:a": "libmp3lame",
 		"b:a": "16000",
 		"ar":  "8000",
 	}).OverWriteOutput().

@@ -1,0 +1,264 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/circuitbreak"
+	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/config"
+	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/minio"
+	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/voice"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+)
+
+// ClickHouseConfig holds the connection configuration
+type ClickHouseConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	Database string
+}
+
+// chunkSlice splits a slice into chunks of specified size
+func chunkSlice(slice []string, chunkSize int) [][]string {
+	var chunks [][]string
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+		end = min(end, len(slice))
+		chunks = append(chunks, slice[i:end])
+	}
+	return chunks
+}
+
+// connectClickHouse creates a connection to ClickHouse
+func connectClickHouse(config ClickHouseConfig) (driver.Conn, error) {
+	conn, err := clickhouse.Open(&clickhouse.Options{
+		Addr: []string{fmt.Sprintf("%s:%d", config.Host, config.Port)},
+		Auth: clickhouse.Auth{
+			Database: config.Database,
+			Username: config.Username,
+			Password: config.Password,
+		},
+		Protocol: clickhouse.HTTP,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to ClickHouse: %w", err)
+	}
+
+	// Ping to verify connection
+	if err := conn.Ping(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to ping ClickHouse: %w", err)
+	}
+
+	return conn, nil
+}
+
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Configuration for the first ClickHouse instance
+	config2 := ClickHouseConfig{
+		Host:     "172.16.36.74", // Replace with your host
+		Port:     8123,           // Replace with your port
+		Username: "sre_chatbot",  // Replace with your username
+		Password: "kgftuw",       // Replace with your password
+		Database: "sre_chatbot",  // Replace with your database name
+	}
+
+	// Configuration for the second ClickHouse instance
+	config1 := ClickHouseConfig{
+		Host:     "172.16.1.15",      // Replace with your host
+		Port:     31390,              // Replace with your port (different from first)
+		Username: "zaal",             // Replace with your username
+		Password: "rt81g7mHDF0v489I", // Replace with your password
+		Database: "zaal",             // Replace with your database name
+	}
+
+	// Connect to the first ClickHouse instance
+	log.Println("Connecting to first ClickHouse instance...")
+	conn1, err := connectClickHouse(config1)
+	if err != nil {
+		log.Fatalf("Error connecting to first ClickHouse: %v", err)
+	}
+	defer conn1.Close()
+	log.Println("Successfully connected to first ClickHouse instance")
+
+	// Query 1: Get call_ids from call_analytics_dist
+	query1 := "SELECT call_id FROM call_analytics_dist WHERE agent_id = 'mcinext' AND created_at <= toDateTime('2026-01-28 23:59:59')"
+	log.Printf("Executing query 1: %s\n", query1)
+
+	rows1, err := conn1.Query(context.Background(), query1)
+	if err != nil {
+		log.Fatalf("Error executing query 1: %v", err)
+	}
+	defer rows1.Close()
+
+	// Collect call_ids
+	var callIDs []string
+	for rows1.Next() {
+		var callID string
+		if err := rows1.Scan(&callID); err != nil {
+			log.Fatalf("Error scanning row: %v", err)
+		}
+		callIDs = append(callIDs, callID)
+	}
+
+	if err := rows1.Err(); err != nil {
+		log.Fatalf("Error iterating rows: %v", err)
+	}
+
+	log.Printf("Found %d call IDs from first query\n", len(callIDs))
+	if len(callIDs) == 0 {
+		log.Println("No call IDs found. Exiting.")
+		return
+	}
+
+	// Display the call IDs
+	fmt.Printf("\nCall IDs retrieved size: %v\n", len(callIDs))
+
+	// Connect to the second ClickHouse instance
+	log.Println("\nConnecting to second ClickHouse instance...")
+	conn2, err := connectClickHouse(config2)
+	if err != nil {
+		log.Fatalf("Error connecting to second ClickHouse: %v", err)
+	}
+	defer conn2.Close()
+	log.Println("Successfully connected to second ClickHouse instance")
+
+	// Initialize Minio clients
+	minioIVA, err := minio.NewMinioClient(
+		config.Conf.MinioIvaAccessKey,
+		config.Conf.MinioIvaSecretKey,
+		config.Conf.MinioIvaBucketName,
+		config.Conf.MinioIvaPathPrefix,
+		circuitbreak.MinioIVAService,
+	)
+	if err != nil {
+		panic(err)
+	}
+	minioCOA, err := minio.NewMinioClient(
+		config.Conf.MinioAccessKey,
+		config.Conf.MinioSecretKey,
+		config.Conf.MinioBucketName,
+		config.Conf.MinioPathPrefix,
+		circuitbreak.MinioCOAService,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	voiceService := voice.NewMergeService()
+
+	// Split call IDs into chunks of 1000
+	chunkSize := 1000
+	callIDChunks := chunkSlice(callIDs, chunkSize)
+	log.Printf("Split %d call IDs into %d chunks of size %d\n", len(callIDs), len(callIDChunks), chunkSize)
+
+	// Query 2: Get session details using call_ids in chunks
+	query2 := "SELECT call_id, agent_track_path, participant_track_path FROM iva_sessions_dist WHERE call_id IN (?)"
+
+	// Process results from all chunks
+	fmt.Println("================")
+	totalCount := 0
+	totalProcessed := 0
+	totalFailed := 0
+
+	for chunkIndex, chunk := range callIDChunks {
+		log.Printf("\nProcessing chunk %d/%d (%d call IDs)...\n", chunkIndex+1, len(callIDChunks), len(chunk))
+
+		rows2, err := conn2.Query(context.Background(), query2, chunk)
+		if err != nil {
+			log.Fatalf("Error executing query 2 for chunk %d: %v", chunkIndex+1, err)
+		}
+
+		// Process results from this chunk
+		chunkCount := 0
+		chunkProcessed := 0
+		chunkFailed := 0
+
+		for rows2.Next() {
+			var (
+				callID               string
+				agentTrackPath       string
+				participantTrackPath string
+			)
+			if err := rows2.Scan(&callID, &agentTrackPath, &participantTrackPath); err != nil {
+				rows2.Close()
+				log.Fatalf("Error scanning row: %v", err)
+			}
+			chunkCount++
+			totalCount++
+			fmt.Printf("\nRecord %d (Chunk %d):\n", totalCount, chunkIndex+1)
+			fmt.Printf("  Call ID: %s\n", callID)
+			fmt.Printf("  Agent Track Path: %s\n", agentTrackPath)
+			fmt.Printf("  Participant Track Path: %s\n", participantTrackPath)
+
+			existed, err := minioCOA.FileExists(ctx, callID)
+			if err != nil {
+				log.Printf("failed to check file is existed, %v\n", callID)
+			}
+			if existed {
+				log.Printf("file existed %v\n", callID)
+				continue
+			}
+
+			// Download audio files from MinIO IVA
+			agentBuff, err := minioIVA.Download(ctx, agentTrackPath)
+			if err != nil {
+				log.Printf("Failed to download agent track for call %s: %v\n", callID, err)
+				chunkFailed++
+				totalFailed++
+				continue
+			}
+
+			partBuff, err := minioIVA.Download(ctx, participantTrackPath)
+			if err != nil {
+				log.Printf("Failed to download participant track for call %s: %v\n", callID, err)
+				chunkFailed++
+				totalFailed++
+				continue
+			}
+
+			// Merge voice files
+			buff, err := voiceService.MergeVoiceFiles(ctx, partBuff, agentBuff, callID)
+			if err != nil {
+				log.Printf("Failed to merge call %s: %v\n", callID, err)
+				chunkFailed++
+				totalFailed++
+				continue
+			}
+
+			// Upload merged file to MinIO COA
+			_, err = minioCOA.Upload(ctx, buff, callID)
+			if err != nil {
+				log.Printf("Failed to upload call to minio %s: %v\n", callID, err)
+				chunkFailed++
+				totalFailed++
+				continue
+			}
+
+			chunkProcessed++
+			totalProcessed++
+			log.Printf("Successfully processed call %s\n", callID)
+		}
+
+		if err := rows2.Err(); err != nil {
+			rows2.Close()
+			log.Fatalf("Error iterating rows in chunk %d: %v", chunkIndex+1, err)
+		}
+		rows2.Close()
+
+		log.Printf("Chunk %d complete: %d records found, %d processed successfully, %d failed\n",
+			chunkIndex+1, chunkCount, chunkProcessed, chunkFailed)
+	}
+
+	log.Printf("\n=== Summary ===\n")
+	log.Printf("Total records found: %d\n", totalCount)
+	log.Printf("Total processed successfully: %d\n", totalProcessed)
+	log.Printf("Total failed: %d\n", totalFailed)
+	log.Println("Query execution completed successfully!")
+}

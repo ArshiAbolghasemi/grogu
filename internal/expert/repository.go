@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/database"
+	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/logging"
 	"github.com/sony/gobreaker/v2"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -35,6 +37,13 @@ func (expertRepository *ExpertRepository) GetExpertByUserCode(ctx context.Contex
 			Where("user_code = ?", userCode).
 			First(&expert).Error
 		if err != nil {
+			logging.Logger.Error("[GetExpertByUserCode] Failed to fetch expert - may cause circuit breaker trip",
+				zap.String("user_code", userCode),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+				zap.Bool("is_record_not_found", errors.Is(err, gorm.ErrRecordNotFound)),
+			)
+
 			return nil, err
 		}
 
@@ -67,6 +76,12 @@ func (expertRepository *ExpertRepository) CreateExpert(ctx context.Context, user
 			Omit("first_name", "last_name", "phone_number").
 			Create(expert).Error
 		if err != nil {
+			logging.Logger.Error("[CreateExpert] Failed to create expert - may cause circuit breaker trip",
+				zap.String("user_code", userCode),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
 			return nil, err
 		}
 

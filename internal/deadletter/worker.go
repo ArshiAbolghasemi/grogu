@@ -36,31 +36,58 @@ func NewWorker(
 }
 
 func (dlWorker *DeadLetterWorker) Run(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(config.Conf.DeadLetterCallInterval) * time.Minute)
+	interval := time.Duration(config.Conf.DeadLetterCallInterval) * time.Minute
+	logging.Logger.Info("[DeadLetterWorker.Run] Starting dead letter worker",
+		zap.Duration("check_interval", interval),
+	)
+
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
+			logging.Logger.Info("[DeadLetterWorker.Run] Context canceled, stopping dead letter worker",
+				zap.Error(ctx.Err()),
+			)
+
 			return
 		case <-ticker.C:
+			logging.Logger.Debug("[DeadLetterWorker.Run] Ticker fired, processing dead letter calls")
 			dlWorker.processDeadLetterCalls(ctx)
 		}
 	}
 }
 
 func (dlWorker *DeadLetterWorker) processDeadLetterCalls(ctx context.Context) {
+	logging.Logger.Debug("[processDeadLetterCalls] Fetching pending dead letter calls...")
+
+	// Check context before processing
+	if ctx.Err() != nil {
+		logging.Logger.Warn("[processDeadLetterCalls] Context canceled, skipping dead letter processing",
+			zap.Error(ctx.Err()),
+		)
+
+		return
+	}
+
 	dlCalls, err := dlWorker.DLRepository.GetPendingCalls(ctx)
 	if err != nil {
+		logging.Logger.Error("[processDeadLetterCalls] Failed to get pending calls",
+			zap.Error(err),
+		)
+
 		return
 	}
 
 	if len(dlCalls) == 0 {
-		logging.Logger.Info("no dl calls are existed")
+		logging.Logger.Debug("[processDeadLetterCalls] No pending dead letter calls")
 		return
 	}
 
-	logging.Logger.Info("start processing dl calls", zap.Int("count_dl_calls", len(dlCalls)))
+	logging.Logger.Info("[processDeadLetterCalls] Starting to process dead letter calls",
+		zap.Int("count", len(dlCalls)),
+	)
 
 	for idx := range dlCalls {
 		dlCall := dlCalls[idx]

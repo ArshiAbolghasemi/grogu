@@ -35,6 +35,7 @@ func (app *Grogu) processTelcMessage(ctx context.Context, msg *sarama.ConsumerMe
 		logging.Logger.Debug("Process message duration",
 			zap.String("platform", "Telc"),
 			zap.Duration("duration", duration),
+			zap.String("msg_timestamp", msg.Timestamp.String()),
 		)
 	}()
 
@@ -53,7 +54,7 @@ func (app *Grogu) processTelcMessage(ctx context.Context, msg *sarama.ConsumerMe
 		logging.Logger.Error("failed to process call message",
 			zap.String("error", err.Error()),
 			zap.ByteString("call_id", msg.Key),
-			zap.ByteString("msg_value", msg.Value),
+			zap.Bool("is_context_error", ctx.Err() != nil),
 		)
 
 		_ = app.DeadLetterService.MarkCall(ctx, string(msg.Key), msg.Value, err.Error())
@@ -84,6 +85,7 @@ func (app *Grogu) processIvaMessage(ctx context.Context, msg *sarama.ConsumerMes
 		logging.Logger.Debug("Process message duration",
 			zap.String("platform", "IVA"),
 			zap.Duration("duration", duration),
+			zap.String("msg_timestamp", msg.Timestamp.String()),
 		)
 	}()
 
@@ -179,18 +181,26 @@ func (app *Grogu) recordKafkaLatency(timeStr, platform string) {
 	// Try RFC3339 first
 	startTime, parseErr = time.Parse(time.RFC3339, timeStr)
 	if parseErr != nil {
-		// Try common SQL format
-		startTime, parseErr = time.Parse("2006-01-02 15:04:05", timeStr)
+		// Try common SQL format with fractional seconds
+		startTime, parseErr = time.Parse("2006-01-02 15:04:05.999", timeStr)
+		if parseErr != nil {
+			// Try common SQL format
+			startTime, parseErr = time.Parse("2006-01-02 15:04:05", timeStr)
+		}
 	}
 
 	if parseErr == nil {
-		latency := time.Since(startTime).Seconds()
-		prometheusGrogu.KafkaMessageLatency.WithLabelValues(platform).Observe(latency)
-		logging.Logger.Debug("Kafka message latency",
-			zap.String("platform", platform),
-			zap.Float64("latency", latency),
-		)
+		app.observeKafkaLatency(startTime, platform)
 	}
+}
+
+func (app *Grogu) observeKafkaLatency(startTime time.Time, platform string) {
+	latency := time.Since(startTime).Seconds()
+	prometheusGrogu.KafkaMessageLatency.WithLabelValues(platform).Observe(latency)
+	logging.Logger.Debug("Kafka message latency",
+		zap.String("platform", platform),
+		zap.Float64("latency", latency),
+	)
 }
 
 func (app *Grogu) handlePanic(platform string) {

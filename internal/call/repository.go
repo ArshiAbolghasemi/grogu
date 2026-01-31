@@ -12,7 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrInvalidTelcCallRecordResult = errors.New("invalid result type, it should be pointer to telcCallRecord struct")
+var (
+	ErrInvalidTelcCallRecordResult = errors.New("invalid result type, it should be pointer to telcCallRecord struct")
+	ErrInvalidCallResult           = errors.New("invalid result type, it should be pointer to Call struct")
+)
 
 type CallRepository struct {
 	DBConn         *gorm.DB
@@ -33,6 +36,16 @@ func (callRepository *CallRepository) UpdateCallStatus(ctx context.Context, call
 	_, err := callRepository.CircuitBreaker.Execute(func() (any, error) {
 		var call Call
 
+		// Check context before database operation
+		if ctx.Err() != nil {
+			logging.Logger.Warn("[UpdateCallStatus] Context canceled before DB operation",
+				zap.String("call_id", callID),
+				zap.Error(ctx.Err()),
+			)
+
+			return nil, ctx.Err()
+		}
+
 		err := callRepository.DBConn.WithContext(ctx).
 			Where("call_id = ?", callID).
 			First(&call).Error
@@ -42,9 +55,10 @@ func (callRepository *CallRepository) UpdateCallStatus(ctx context.Context, call
 		}
 
 		if err != nil {
-			logging.Logger.Error("failed to fetch call",
+			logging.Logger.Error("[UpdateCallStatus] Failed to fetch call",
 				zap.String("call_id", callID),
 				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
 			)
 
 			return nil, err
@@ -59,6 +73,13 @@ func (callRepository *CallRepository) UpdateCallStatus(ctx context.Context, call
 			Where("call_id = ?", callID).
 			Update("status", status).Error
 		if err != nil {
+			logging.Logger.Error("[UpdateCallStatus] Failed to update call status",
+				zap.String("call_id", callID),
+				zap.String("status", status),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
 			return nil, err
 		}
 
@@ -80,9 +101,11 @@ func (callRepository *CallRepository) GetTelcCallRecordByID(
 			Where("call_id = ?", callID).
 			First(&telcCallRecord).Error
 		if err != nil {
-			logging.Logger.Error("failed to fetch call record",
+			logging.Logger.Error("[GetTelcCallRecordByID] Failed to fetch TelC call record - may cause circuit breaker trip",
 				zap.String("call_id", callID),
 				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+				zap.Bool("is_record_not_found", errors.Is(err, gorm.ErrRecordNotFound)),
 			)
 
 			return nil, err
@@ -101,6 +124,8 @@ func (callRepository *CallRepository) GetTelcCallRecordByID(
 
 	return telcCallRecord, nil
 }
+
+// GetCallByID retrieves a Call by its callID.
 
 // UpdateTelCCallRecord updates the Reasons, CallStartDate, and CallEndDate
 func (callRepository *CallRepository) UpdateTelCCallRecord(
@@ -121,6 +146,13 @@ func (callRepository *CallRepository) UpdateTelCCallRecord(
 			Where("call_id = ?", record.CallID).
 			Updates(updates).Error
 		if err != nil {
+			logging.Logger.Error("[UpdateTelCCallRecord] Failed to update TelC call record - may cause circuit breaker trip",
+				zap.String("call_id", record.CallID),
+				zap.Any("updates", updates),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
 			return nil, err
 		}
 
@@ -148,6 +180,41 @@ func buildTelCCallUpdates(reasons []byte, startTime, endTime *time.Time) map[str
 	return updates
 }
 
+// UpdateTelCCallRecordWithUpdates updates the TelC call record with a custom map of updates
+func (callRepository *CallRepository) UpdateTelCCallRecordWithUpdates(
+	ctx context.Context,
+	record *TelCCallRecord,
+	updates map[string]any,
+) error {
+	if len(updates) == 0 {
+		return nil
+	}
+
+	_, err := callRepository.CircuitBreaker.Execute(func() (any, error) {
+		err := callRepository.DBConn.
+			WithContext(ctx).
+			Model(record).
+			Where("call_id = ?", record.CallID).
+			Updates(updates).Error
+		if err != nil {
+			logging.Logger.Error(
+				"[UpdateTelCCallRecordWithUpdates] Failed to update TelC call record with custom updates - "+
+					"may cause circuit breaker trip",
+				zap.String("call_id", record.CallID),
+				zap.Any("updates", updates),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
+			return nil, err
+		}
+
+		return record, nil
+	})
+
+	return err
+}
+
 func (callRepository *CallRepository) createCall(ctx context.Context, callID, status string) (*Call, error) {
 	call := Call{
 		CallID: callID,
@@ -156,9 +223,11 @@ func (callRepository *CallRepository) createCall(ctx context.Context, callID, st
 
 	err := callRepository.DBConn.WithContext(ctx).Create(&call).Error
 	if err != nil {
-		logging.Logger.Error("failed to create call",
+		logging.Logger.Error("[createCall] Failed to create call - may cause circuit breaker trip",
 			zap.String("call_id", callID),
+			zap.String("status", status),
 			zap.String("error", err.Error()),
+			zap.Bool("is_context_error", ctx.Err() != nil),
 		)
 
 		return nil, err

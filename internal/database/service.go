@@ -75,10 +75,24 @@ func GetCircuitBreakerSettings() gobreaker.Settings {
 		Name:     "database",
 		Interval: time.Duration(config.Conf.DBIntervalCB) * time.Second,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			return counts.ConsecutiveFailures >= config.Conf.DBConsecutiveFailuresCB
+			willTrip := counts.ConsecutiveFailures >= config.Conf.DBConsecutiveFailuresCB
+
+			if willTrip {
+				logging.Logger.Error("Database circuit breaker about to trip",
+					zap.String("service", "database"),
+					zap.Uint32("total_requests", counts.Requests),
+					zap.Uint32("total_successes", counts.TotalSuccesses),
+					zap.Uint32("total_failures", counts.TotalFailures),
+					zap.Uint32("consecutive_successes", counts.ConsecutiveSuccesses),
+					zap.Uint32("consecutive_failures", counts.ConsecutiveFailures),
+					zap.Uint32("threshold", config.Conf.DBConsecutiveFailuresCB),
+				)
+			}
+
+			return willTrip
 		},
 		OnStateChange: func(name string, fromSate, toSate gobreaker.State) {
-			logging.Logger.Info("Circuit state changed",
+			logging.Logger.Error("Database circuit breaker state changed",
 				zap.String("service", name),
 				zap.String("from", fromSate.String()),
 				zap.String("to", toSate.String()),

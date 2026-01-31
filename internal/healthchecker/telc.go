@@ -9,19 +9,23 @@ import (
 	"go.uber.org/zap"
 )
 
-func CheckTelC() bool {
+func CheckTelC() error {
 	telcService := telc.NewService()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	_, err := telcService.GetCallInfo(ctx, config.Conf.HealthCheckerSampleCallId)
-	isGetInfoOk := (err == nil)
-	logging.Logger.Info("telc call info api staus", zap.Bool("ok", isGetInfoOk))
+	if err != nil {
+		logging.Logger.Info("telc call info api status", zap.Error(err))
+		return err
+	}
 
 	_, err = telcService.GetVoiceCall(ctx, config.Conf.HealthCheckerSampleCallId)
-	isGetFileOk := (err == nil)
-	logging.Logger.Info("telc call file api staus", zap.Bool("ok", isGetFileOk))
+	if err != nil {
+		logging.Logger.Info("telc call file api status", zap.Error(err))
+		return err
+	}
 
-	return (isGetInfoOk && isGetFileOk)
+	return nil
 }

@@ -16,6 +16,7 @@ import (
 var (
 	ErrInvalidCallASRDeadLetterResult      = errors.New("invalid result type, it should be pointer to CallASRDeadLetter")
 	ErrInvalidCallASRDeadLetterSliceResult = errors.New("invalid result type, it should be slice of CallASRDeadLetter")
+	ErrWorkerFailedToLockDLCall            = errors.New("worker failed to lock dl call")
 )
 
 type DeadLetterRepository struct {
@@ -70,9 +71,10 @@ func (dlRepository *DeadLetterRepository) CreateCall(
 			}).
 			FirstOrCreate(&dlCall).Error
 		if err != nil {
-			logging.Logger.Error("failed to create dead letter record",
+			logging.Logger.Error("[CreateCall] Failed to create/update dead letter record - may cause circuit breaker trip",
 				zap.String("call_id", callID),
 				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
 			)
 
 			return nil, err
@@ -107,7 +109,11 @@ func (dlRepository *DeadLetterRepository) GetPendingCalls(ctx context.Context) (
 			Limit(config.Conf.DeadLetterCallMaxRetries).
 			Find(&records).Error
 		if err != nil {
-			logging.Logger.Info("failed to fetch dead letter calls", zap.String("error", err.Error()))
+			logging.Logger.Error("[GetPendingCalls] Failed to fetch pending dead letter calls - may cause circuit breaker trip",
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
 			return nil, err
 		}
 
@@ -125,19 +131,36 @@ func (dlRepository *DeadLetterRepository) GetPendingCalls(ctx context.Context) (
 	return records, nil
 }
 
-func (dlRepository *DeadLetterRepository) UpdateCallStatus(
+func (dlRepository *DeadLetterRepository) UpdateDLCallStatusToInprogress(
 	ctx context.Context,
 	dlCall *CallASRDeadLetter,
-	status string,
 ) error {
 	_, err := dlRepository.CircuitBreaker.Execute(func() (any, error) {
-		err := dlRepository.DBConn.
+		transaction := dlRepository.DBConn.
 			WithContext(ctx).
 			Model(dlCall).
-			Where("call_id = ?", dlCall.CallID).
-			Update("status", status).Error
+			Where("call_id = ? AND status = ?", dlCall.CallID, StatusPending).
+			Update("status", StatusInProgress)
+
+		err := transaction.Error
 		if err != nil {
+			logging.Logger.Error("[UpdateCallStatus] Failed to update dead letter call status - may cause circuit breaker trip",
+				zap.String("call_id", dlCall.CallID),
+				zap.String("status", StatusInProgress),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
 			return nil, err
+		}
+
+		if transaction.RowsAffected == 0 {
+			logging.Logger.Warn("[UpdateCallStatus] No pending record to update",
+				zap.String("call_id", dlCall.CallID),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+
+			return nil, ErrWorkerFailedToLockDLCall
 		}
 
 		return dlCall, nil
@@ -164,9 +187,13 @@ func (dlRepository *DeadLetterRepository) IncreaseRetryCount(
 			Where("call_id = ?", dlCall.CallID).
 			Updates(updates).Error
 		if err != nil {
-			logging.Logger.Error("failed to increase dl call retry count",
+			logging.Logger.Error(
+				"[IncreaseRetryCount] Failed to increase dead letter call retry count - "+
+					"may cause circuit breaker trip",
 				zap.String("call_id", dlCall.CallID),
+				zap.String("error_msg", errMsg),
 				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
 			)
 
 			return nil, err
@@ -184,6 +211,13 @@ func (dlRepository *DeadLetterRepository) DeleteDlCallRecord(ctx context.Context
 			Where("call_id = ?", dlCall.CallID).
 			Delete(dlCall).
 			Error
+		if err != nil {
+			logging.Logger.Error("[DeleteDlCallRecord] Failed to delete dead letter record - may cause circuit breaker trip",
+				zap.String("call_id", dlCall.CallID),
+				zap.String("error", err.Error()),
+				zap.Bool("is_context_error", ctx.Err() != nil),
+			)
+		}
 
 		return nil, err
 	})

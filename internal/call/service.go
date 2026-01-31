@@ -12,6 +12,7 @@ import (
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/expert"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/logging"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/minio"
+	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/prometheus"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/telc"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/utils"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/voice"
@@ -27,9 +28,14 @@ const (
 
 // Static errors for call service operations
 var (
-	ErrNotSessionType    = errors.New("message type is not 'session'")
-	ErrMissingTrackPaths = errors.New("missing required voice track paths")
-	ErrFileDurationIssue = fmt.Errorf("file with duration %d", FileWithIssueDurtion)
+	ErrNotSessionType           = errors.New("message type is not 'session'")
+	ErrMissingTrackPaths        = errors.New("missing required voice track paths")
+	ErrFileDurationIssue        = fmt.Errorf("file with duration %d", FileWithIssueDurtion)
+	ErrMissingTelCTimeData      = errors.New("missing TelC start_time or end_time and recovery is disabled")
+	ErrDurationRecoveryDisabled = errors.New("duration is missing/invalid and recovery is disabled")
+	ErrVoiceBufferNilOrEmpty    = errors.New("cannot recover duration: voice buffer is nil or empty")
+	ErrCreatedAtNil             = errors.New("cannot recover time data: created_at is nil")
+	ErrFileUpload               = errors.New("failed upload voice file to minio")
 )
 
 type CallMessage struct {
@@ -48,6 +54,7 @@ type IvaCallMessage struct {
 	AgentTrackPath       string  `json:"agent_track_path"`       // Path in Minio for agent voice
 	AgentStartedTime     string  `json:"agent_started_time"`     // UTC timestamp when agent started
 	AgentEndedTime       string  `json:"agent_ended_time"`       // UTC timestamp when agent ended
+	PhoneNumber          string  `json:"phone_number"`           // Phone number from IVA platform
 }
 
 type CallResultMessage struct {
@@ -58,26 +65,31 @@ type CallResultMessage struct {
 }
 
 type CallService struct {
-	CallRepository    *CallRepository
-	ExpertRepository  *expert.ExpertRepository
-	MinioClient       *minio.MinioClient
-	ASRClient         *asr.ASRClient
-	TelCService       *telc.TelCService
-	VoiceMergeService *voice.MergeService
+	CallRepository       *CallRepository
+	ExpertRepository     *expert.ExpertRepository
+	MinioIVAClient       *minio.MinioClient
+	MinioCOAClient       *minio.MinioClient
+	ASRClient            asr.TranscriptionProvider
+	TelCService          *telc.TelCService
+	VoiceMergeService    *voice.MergeService
+	VoiceDurationService *voice.DurationService
 }
 
 func NewService(
 	dbConn *gorm.DB,
-	minioClient *minio.MinioClient,
-	asrClient *asr.ASRClient,
+	minioIVAClient *minio.MinioClient,
+	minioCOAClient *minio.MinioClient,
+	asrClient asr.TranscriptionProvider,
 ) *CallService {
 	return &CallService{
-		CallRepository:    NewCallRepository(dbConn),
-		ExpertRepository:  expert.NewExpertRepository(dbConn),
-		MinioClient:       minioClient,
-		ASRClient:         asrClient,
-		TelCService:       telc.NewService(),
-		VoiceMergeService: voice.NewMergeService(),
+		CallRepository:       NewCallRepository(dbConn),
+		ExpertRepository:     expert.NewExpertRepository(dbConn),
+		MinioIVAClient:       minioIVAClient,
+		MinioCOAClient:       minioCOAClient,
+		ASRClient:            asrClient,
+		TelCService:          telc.NewService(),
+		VoiceMergeService:    voice.NewMergeService(),
+		VoiceDurationService: voice.NewDurationService(),
 	}
 }
 
@@ -183,7 +195,6 @@ func (callService *CallService) processOnlineCall(
 	group, _ := errgroup.WithContext(ctx)
 
 	group.Go(func() error { return callService.ensureExpertExists(ctx, callRecord) })
-	group.Go(func() error { return callService.updateTelcCallInfo(ctx, callRecord) })
 
 	var voiceBuffer *bytes.Buffer
 
@@ -197,6 +208,17 @@ func (callService *CallService) processOnlineCall(
 	err = group.Wait()
 	if err != nil && !errors.Is(err, ErrFileDurationIssue) {
 		logging.Logger.Error("Failed to process call",
+			zap.String("call_id", callRecord.CallID),
+			zap.String("error", err.Error()),
+		)
+
+		return nil, err
+	}
+
+	// Update TelC call info after we have the voice buffer (needed for duration recovery)
+	err = callService.updateTelcCallInfo(ctx, callRecord, voiceBuffer)
+	if err != nil {
+		logging.Logger.Error("Failed to update TelC call info",
 			zap.String("call_id", callRecord.CallID),
 			zap.String("error", err.Error()),
 		)
@@ -239,7 +261,7 @@ func (callService *CallService) processOfflineCall(
 	ctx context.Context,
 	callMsg *CallMessage,
 ) (*CallResultMessage, error) {
-	voiceBuffer, err := callService.MinioClient.Download(ctx, callMsg.CallID)
+	voiceBuffer, err := callService.MinioCOAClient.Download(ctx, callMsg.CallID)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +342,12 @@ func (callService *CallService) processIvaCall(
 	}
 
 	// Merge and process the voice files
-	return callService.mergeAndProcessVoice(ctx, participantBuffer, agentBuffer, ivaCallMsg, agentStartTime, agentEndTime)
+	voiceBuffer, err := callService.mergeIVAVoice(ctx, participantBuffer, agentBuffer, ivaCallMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	return callService.processIVAVoice(ctx, voiceBuffer, ivaCallMsg, agentStartTime, agentEndTime)
 }
 
 func (callService *CallService) ensureExpertExists(ctx context.Context, callRecord *TelCCallRecord) error {
@@ -332,19 +359,195 @@ func (callService *CallService) ensureExpertExists(ctx context.Context, callReco
 	return err
 }
 
-func (callService *CallService) updateTelcCallInfo(ctx context.Context, callRecord *TelCCallRecord) error {
+func (callService *CallService) updateTelcCallInfo(
+	ctx context.Context,
+	callRecord *TelCCallRecord,
+	voiceBuffer *bytes.Buffer,
+) error {
 	info, err := callService.TelCService.GetCallInfo(ctx, callRecord.CallID)
 	if err != nil {
 		return err
 	}
 
-	return callService.CallRepository.UpdateTelCCallRecord(
+	startTime := info.StartTime
+	endTime := info.EndTime
+
+	// Recover duration if missing or invalid
+	recoveredDuration, err := callService.recoverDurationIfNeeded(ctx, callRecord, voiceBuffer)
+	if err != nil {
+		return err
+	}
+
+	// Recover time data if missing
+	startTime, endTime, err = callService.recoverTimeDataIfNeeded(callRecord, startTime, endTime)
+	if err != nil {
+		return err
+	}
+
+	// Update the record in the database
+	updates := map[string]any{
+		"reasons":         info.Reasons,
+		"call_start_date": startTime,
+		"call_end_date":   endTime,
+	}
+
+	// If duration was recovered, update it in the database as well
+	if recoveredDuration {
+		updates["duration"] = callRecord.Duration
+	}
+
+	return callService.CallRepository.UpdateTelCCallRecordWithUpdates(
 		ctx,
 		callRecord,
-		info.Reasons,
-		info.StartTime,
-		info.EndTime,
+		updates,
 	)
+}
+
+// recoverDurationIfNeeded checks if duration recovery is needed and performs it
+func (callService *CallService) recoverDurationIfNeeded(
+	ctx context.Context,
+	callRecord *TelCCallRecord,
+	voiceBuffer *bytes.Buffer,
+) (bool, error) {
+	// Check if duration is valid
+	if callRecord.Duration != 0 && callRecord.Duration != FileWithIssueDurtion {
+		return false, nil
+	}
+
+	// Duration is missing or invalid
+	prometheus.TelcMissingDataTotal.WithLabelValues("duration").Inc()
+
+	if !config.Conf.RecoverTelcData {
+		logging.Logger.Warn("TelC duration is missing/invalid and recovery is disabled, dropping call",
+			zap.String("call_id", callRecord.CallID),
+			zap.Int("duration", callRecord.Duration),
+		)
+
+		return false, fmt.Errorf("%w: %d", ErrDurationRecoveryDisabled, callRecord.Duration)
+	}
+
+	// Recovery is enabled, extract duration from voice file
+	return callService.extractDurationFromVoiceFile(ctx, callRecord, voiceBuffer)
+}
+
+// extractDurationFromVoiceFile extracts duration from the voice buffer
+func (callService *CallService) extractDurationFromVoiceFile(
+	ctx context.Context,
+	callRecord *TelCCallRecord,
+	voiceBuffer *bytes.Buffer,
+) (bool, error) {
+	if voiceBuffer == nil || voiceBuffer.Len() == 0 {
+		logging.Logger.Error("Cannot recover duration: voice buffer is nil or empty",
+			zap.String("call_id", callRecord.CallID),
+		)
+
+		return false, ErrVoiceBufferNilOrEmpty
+	}
+
+	logging.Logger.Info("TelC duration missing/invalid, extracting from voice file",
+		zap.String("call_id", callRecord.CallID),
+		zap.Int("original_duration", callRecord.Duration),
+	)
+
+	// Create a copy of the buffer to avoid consuming it
+	bufferCopy := bytes.NewBuffer(voiceBuffer.Bytes())
+
+	extractedDuration, err := callService.VoiceDurationService.GetDuration(ctx, bufferCopy, callRecord.CallID)
+	if err != nil {
+		logging.Logger.Error("Failed to extract duration from voice file",
+			zap.String("call_id", callRecord.CallID),
+			zap.String("error", err.Error()),
+		)
+
+		return false, fmt.Errorf("failed to extract duration: %w", err)
+	}
+
+	// Update the duration in the record
+	callRecord.Duration = extractedDuration
+
+	logging.Logger.Info("Duration recovered from voice file",
+		zap.String("call_id", callRecord.CallID),
+		zap.Int("recovered_duration", extractedDuration),
+	)
+
+	return true, nil
+}
+
+// recoverTimeDataIfNeeded checks if time data recovery is needed and performs it
+func (callService *CallService) recoverTimeDataIfNeeded(
+	callRecord *TelCCallRecord,
+	startTime, endTime *time.Time,
+) (*time.Time, *time.Time, error) {
+	// Check if both times are present
+	if startTime != nil && endTime != nil {
+		return startTime, endTime, nil
+	}
+
+	// Time data is missing - record metrics
+	if startTime == nil {
+		prometheus.TelcMissingDataTotal.WithLabelValues("start_time").Inc()
+	}
+
+	if endTime == nil {
+		prometheus.TelcMissingDataTotal.WithLabelValues("end_time").Inc()
+	}
+
+	if !config.Conf.RecoverTelcData {
+		logging.Logger.Warn("TelC time data missing and recovery is disabled, dropping call",
+			zap.String("call_id", callRecord.CallID),
+			zap.Bool("start_time_present", startTime != nil),
+			zap.Bool("end_time_present", endTime != nil),
+		)
+
+		return nil, nil, ErrMissingTelCTimeData
+	}
+
+	// Recovery is enabled, calculate missing times
+	return callService.calculateMissingTimes(callRecord, startTime, endTime)
+}
+
+// calculateMissingTimes calculates missing start or end times from created_at and duration
+func (callService *CallService) calculateMissingTimes(
+	callRecord *TelCCallRecord,
+	startTime, endTime *time.Time,
+) (*time.Time, *time.Time, error) {
+	logging.Logger.Info("TelC time data missing, recovering from created_at and duration",
+		zap.String("call_id", callRecord.CallID),
+		zap.Bool("start_time_present", startTime != nil),
+		zap.Bool("end_time_present", endTime != nil),
+		zap.Int("duration", callRecord.Duration),
+	)
+
+	if callRecord.CreatedAt == nil {
+		logging.Logger.Error("Cannot recover time data: created_at is nil",
+			zap.String("call_id", callRecord.CallID),
+		)
+
+		return nil, nil, ErrCreatedAtNil
+	}
+
+	// start_time = created_at - duration - 1 minute
+	// end_time = created_at - 1 minute
+	recoveredEndTime := callRecord.CreatedAt.Add(-1 * time.Minute)
+	recoveredStartTime := recoveredEndTime.Add(-time.Duration(callRecord.Duration) * time.Second)
+
+	if startTime == nil {
+		startTime = &recoveredStartTime
+		logging.Logger.Info("Recovered start_time",
+			zap.String("call_id", callRecord.CallID),
+			zap.String("recovered_start_time", startTime.Format(time.RFC3339)),
+		)
+	}
+
+	if endTime == nil {
+		endTime = &recoveredEndTime
+		logging.Logger.Info("Recovered end_time",
+			zap.String("call_id", callRecord.CallID),
+			zap.String("recovered_end_time", endTime.Format(time.RFC3339)),
+		)
+	}
+
+	return startTime, endTime, nil
 }
 
 func (callService *CallService) uploadVoiceFile(
@@ -360,7 +563,7 @@ func (callService *CallService) uploadVoiceFile(
 		return nil, err
 	}
 
-	_, err = callService.MinioClient.Upload(ctx, buffer, callRecord.CallID)
+	_, err = callService.MinioCOAClient.Upload(ctx, buffer, callRecord.CallID)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +580,7 @@ func (callService *CallService) downloadVoiceTracks(
 	var participantBuffer, agentBuffer *bytes.Buffer
 
 	group.Go(func() error {
-		buffer, err := callService.MinioClient.Download(groupCtx, ivaCallMsg.ParticipantTrackPath)
+		buffer, err := callService.MinioIVAClient.Download(groupCtx, ivaCallMsg.ParticipantTrackPath)
 		if err != nil {
 			logging.Logger.Error("Failed to download participant track",
 				zap.String("call_id", ivaCallMsg.CallID),
@@ -394,7 +597,7 @@ func (callService *CallService) downloadVoiceTracks(
 	})
 
 	group.Go(func() error {
-		buffer, err := callService.MinioClient.Download(groupCtx, ivaCallMsg.AgentTrackPath)
+		buffer, err := callService.MinioIVAClient.Download(groupCtx, ivaCallMsg.AgentTrackPath)
 		if err != nil {
 			logging.Logger.Error("Failed to download agent track",
 				zap.String("call_id", ivaCallMsg.CallID),
@@ -422,14 +625,12 @@ func (callService *CallService) downloadVoiceTracks(
 	return participantBuffer, agentBuffer, nil
 }
 
-func (callService *CallService) mergeAndProcessVoice(
+func (callService *CallService) mergeIVAVoice(
 	ctx context.Context,
 	participantBuffer *bytes.Buffer,
 	agentBuffer *bytes.Buffer,
 	ivaCallMsg *IvaCallMessage,
-	agentStartTime *time.Time,
-	agentEndTime *time.Time,
-) (*CallResultMessage, error) {
+) (*bytes.Buffer, error) {
 	// Merge the two voice files (participant and agent tracks)
 	mergedVoiceBuffer, err := callService.VoiceMergeService.MergeVoiceFiles(
 		ctx, participantBuffer, agentBuffer, ivaCallMsg.CallID,
@@ -443,13 +644,33 @@ func (callService *CallService) mergeAndProcessVoice(
 		return nil, fmt.Errorf("failed to merge voice files: %w", err)
 	}
 
+	_, err = callService.MinioCOAClient.Upload(ctx, mergedVoiceBuffer, ivaCallMsg.CallID)
+	if err != nil {
+		logging.Logger.Error("Failed to upload merged voice file to minio",
+			zap.String("call_id", ivaCallMsg.CallID),
+			zap.String("error", err.Error()),
+		)
+
+		return nil, ErrFileUpload
+	}
+
 	logging.Logger.Info("Voice files merged successfully, sending to ASR",
 		zap.String("call_id", ivaCallMsg.CallID),
 	)
 
+	return mergedVoiceBuffer, nil
+}
+
+func (callService *CallService) processIVAVoice(
+	ctx context.Context,
+	voiceBuffer *bytes.Buffer,
+	ivaCallMsg *IvaCallMessage,
+	agentStartTime *time.Time,
+	agentEndTime *time.Time,
+) (*CallResultMessage, error) {
 	// Process the merged voice through ASR (same as previous flow)
 	asrResponse, err := callService.ASRClient.GetVoiceTranscriptions(
-		ctx, mergedVoiceBuffer, ivaCallMsg.CallID,
+		ctx, voiceBuffer, ivaCallMsg.CallID,
 	)
 	if err != nil {
 		logging.Logger.Error("Failed to get voice transcription",
@@ -472,14 +693,40 @@ func (callService *CallService) mergeAndProcessVoice(
 		"agent_track_path":       ivaCallMsg.AgentTrackPath,
 		"platform":               "iva",
 		"type":                   ivaCallMsg.Type,
+		"service_no":             ivaCallMsg.PhoneNumber,
+		"access_code":            "9990",
+		"city_code":              "unknown",
+	}
+
+	// Load Asia/Tehran timezone for IVA call times
+	tehranLoc, err := time.LoadLocation("Asia/Tehran")
+	if err != nil {
+		logging.Logger.Error("Failed to load Asia/Tehran timezone",
+			zap.String("call_id", ivaCallMsg.CallID),
+			zap.String("error", err.Error()),
+		)
+
+		return nil, fmt.Errorf("failed to load Asia/Tehran timezone: %w", err)
 	}
 
 	if agentStartTime != nil {
-		callInfo["call_start_date"] = utils.TimeToString(agentStartTime)
+		tehranStartTime := agentStartTime.In(tehranLoc)
+		logging.Logger.Info("Converting agent start time to Tehran timezone",
+			zap.String("call_id", ivaCallMsg.CallID),
+			zap.String("utc_time", agentStartTime.Format(time.RFC3339)),
+			zap.String("tehran_time", tehranStartTime.Format(time.RFC3339)),
+		)
+		callInfo["call_start_date"] = utils.TimeToString(&tehranStartTime)
 	}
 
 	if agentEndTime != nil {
-		callInfo["call_end_date"] = utils.TimeToString(agentEndTime)
+		tehranEndTime := agentEndTime.In(tehranLoc)
+		logging.Logger.Info("Converting agent end time to Tehran timezone",
+			zap.String("call_id", ivaCallMsg.CallID),
+			zap.String("utc_time", agentEndTime.Format(time.RFC3339)),
+			zap.String("tehran_time", tehranEndTime.Format(time.RFC3339)),
+		)
+		callInfo["call_end_date"] = utils.TimeToString(&tehranEndTime)
 	}
 
 	return &CallResultMessage{

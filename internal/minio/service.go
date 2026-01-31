@@ -12,9 +12,11 @@ import (
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/circuitbreak"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/config"
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/logging"
+	prometheusGrogu "git.mci.dev/mse/sre/phoenix/golang/grogu/internal/prometheus"
 	"github.com/avast/retry-go"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
 	"go.uber.org/zap"
 )
@@ -29,23 +31,19 @@ var (
 type MinioClient struct {
 	Client         *minio.Client
 	CircuitBreaker *gobreaker.CircuitBreaker[any]
+	BucketName     string
+	PathPrefix     string
 }
 
 // NewMinioClient initializes a MinIO client with secure HTTPS connection
-// Uses IVA-specific config when SourcePlatform is "iva", otherwise uses Telc config
-func NewMinioClient() (*MinioClient, error) {
-	var endpointURL, accessKey, secretKey string
-
-	// Select configuration based on platform
-	if config.Conf.SourcePlatform == PlatformIva {
-		endpointURL = config.Conf.MinioEndpointURL
-		accessKey = config.Conf.MinioIvaAccessKey
-		secretKey = config.Conf.MinioIvaSecretKey
-	} else {
-		endpointURL = config.Conf.MinioEndpointURL
-		accessKey = config.Conf.MinioAccessKey
-		secretKey = config.Conf.MinioSecretKey
-	}
+func NewMinioClient(
+	accessKey,
+	secretKey,
+	bucketName,
+	pathPrefix,
+	cbService string,
+) (*MinioClient, error) {
+	endpointURL := config.Conf.MinioEndpointURL
 
 	client, err := minio.New(endpointURL, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
@@ -60,11 +58,6 @@ func NewMinioClient() (*MinioClient, error) {
 		return nil, err
 	}
 
-	bucketName := config.Conf.MinioBucketName
-	if config.Conf.SourcePlatform == PlatformIva {
-		bucketName = config.Conf.MinioIvaBucketName
-	}
-
 	logging.Logger.Info("Successfully connected to MinIO",
 		zap.String("platform", config.Conf.SourcePlatform),
 		zap.String("endpoint", endpointURL),
@@ -73,11 +66,13 @@ func NewMinioClient() (*MinioClient, error) {
 
 	return &MinioClient{
 		Client:         client,
-		CircuitBreaker: newCircuitBreaker(),
+		CircuitBreaker: newCircuitBreaker(cbService),
+		BucketName:     bucketName,
+		PathPrefix:     pathPrefix,
 	}, nil
 }
 
-func newCircuitBreaker() *gobreaker.CircuitBreaker[any] {
+func newCircuitBreaker(cbService string) *gobreaker.CircuitBreaker[any] {
 	settings := gobreaker.Settings{
 		Name:     "minio",
 		Interval: time.Duration(config.Conf.MinioIntervalCB) * time.Second,
@@ -93,29 +88,12 @@ func newCircuitBreaker() *gobreaker.CircuitBreaker[any] {
 			)
 
 			if toState == gobreaker.StateOpen {
-				circuitbreak.TriggerError(circuitbreak.MinioService)
+				circuitbreak.TriggerError(cbService)
 			}
 		},
 	}
 
 	return gobreaker.NewCircuitBreaker[any](settings)
-}
-
-// Helper functions to get platform-specific config values
-func getBucketName() string {
-	if config.Conf.SourcePlatform == PlatformIva {
-		return config.Conf.MinioIvaBucketName
-	}
-
-	return config.Conf.MinioBucketName
-}
-
-func getPathPrefix() string {
-	if config.Conf.SourcePlatform == PlatformIva {
-		return config.Conf.MinioIvaPathPrefix
-	}
-
-	return config.Conf.MinioPathPrefix
 }
 
 func getEndpointURL() string {
@@ -198,6 +176,9 @@ func (m *MinioClient) Download(ctx context.Context, objectKey string) (*bytes.Bu
 }
 
 func (m *MinioClient) doUpload(ctx context.Context, buffer *bytes.Buffer, objectKey string) (string, error) {
+	timer := prometheus.NewTimer(prometheusGrogu.MinioOperationDuration.WithLabelValues("upload"))
+	defer timer.ObserveDuration()
+
 	var url string
 
 	ctxWithTimout, cancel := context.WithTimeout(ctx, time.Duration(getTimeout())*time.Second)
@@ -207,7 +188,7 @@ func (m *MinioClient) doUpload(ctx context.Context, buffer *bytes.Buffer, object
 		func() error {
 			_, err := m.Client.PutObject(
 				ctxWithTimout,
-				getBucketName(),
+				m.BucketName,
 				m.getKey(objectKey),
 				bytes.NewReader(buffer.Bytes()),
 				int64(buffer.Len()),
@@ -248,6 +229,9 @@ func (m *MinioClient) doUpload(ctx context.Context, buffer *bytes.Buffer, object
 }
 
 func (m *MinioClient) doDownload(ctx context.Context, objectKey string) (*bytes.Buffer, error) {
+	timer := prometheus.NewTimer(prometheusGrogu.MinioOperationDuration.WithLabelValues("download"))
+	defer timer.ObserveDuration()
+
 	var buf *bytes.Buffer
 
 	ctxWithTimout, cancel := context.WithTimeout(ctx, time.Duration(getTimeout())*time.Second)
@@ -257,7 +241,7 @@ func (m *MinioClient) doDownload(ctx context.Context, objectKey string) (*bytes.
 		func() error {
 			object, err := m.Client.GetObject(
 				ctxWithTimout,
-				getBucketName(),
+				m.BucketName,
 				m.getKey(objectKey),
 				minio.GetObjectOptions{},
 			)
@@ -311,9 +295,9 @@ func (m *MinioClient) doDownload(ctx context.Context, objectKey string) (*bytes.
 }
 
 func (m *MinioClient) generateURL(objectKey string) string {
-	return fmt.Sprintf("%s/%s/%s", getEndpointURL(), getBucketName(), objectKey)
+	return fmt.Sprintf("%s/%s/%s", getEndpointURL(), m.BucketName, objectKey)
 }
 
 func (m *MinioClient) getKey(objectKey string) string {
-	return filepath.Join(getPathPrefix(), objectKey)
+	return filepath.Join(m.PathPrefix, objectKey)
 }

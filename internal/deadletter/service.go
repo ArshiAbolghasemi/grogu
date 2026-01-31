@@ -40,9 +40,10 @@ func (dlService *DeadLetterService) MarkCall(ctx context.Context, callID string,
 }
 
 func (dlService *DeadLetterService) ProcessDeadLetterCall(ctx context.Context, dlCall *CallASRDeadLetter) {
-	err := dlService.DLRepository.UpdateCallStatus(ctx, dlCall, StatusInProgress)
+	err := dlService.DLRepository.UpdateDLCallStatusToInprogress(ctx, dlCall)
 	if err != nil {
 		logging.Logger.Info("failed to update dlCall to in progress", zap.String("call_id", dlCall.CallID))
+		return
 	}
 
 	logging.Logger.Info("dl call status updated successfully", zap.String("call_id", dlCall.CallID))

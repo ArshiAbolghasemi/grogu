@@ -10,11 +10,11 @@ import (
 
 var healtcheckerMsg = "healthchecker msg"
 
-func CheckKafkaProducer() bool {
+func CheckKafkaProducer() error {
 	kafkaProducer, err := kafka.NewProducer()
 	if err != nil {
 		logging.Logger.Error("failed to create new kafka producer client", zap.String("error", err.Error()))
-		return false
+		return err
 	}
 
 	_, _, err = kafkaProducer.SendMessage(
@@ -23,5 +23,5 @@ func CheckKafkaProducer() bool {
 		[]byte(healtcheckerMsg),
 	)
 
-	return err == nil
+	return err
 }

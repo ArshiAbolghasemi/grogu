@@ -3,6 +3,8 @@ package asr
 import (
 	"bytes"
 	"context"
+	"io"
+	"mime/multipart"
 	"time"
 
 	"git.mci.dev/mse/sre/phoenix/golang/grogu/internal/circuitbreak"
@@ -17,16 +19,21 @@ import (
 )
 
 type Segment struct {
-	SegmentNumber int     `json:"segment_number"`
-	Start         float64 `json:"start"`
-	End           float64 `json:"end"`
-	Text          string  `json:"text"`
-	Channel       string  `json:"channel"`
+	SegmentNumber int            `json:"segment_number"`
+	Start         float64        `json:"start"`
+	End           float64        `json:"end"`
+	Text          string         `json:"text"`
+	Channel       string         `json:"channel"`
+	Emotion       map[string]any `json:"emotion"`
 }
 
 type ASRResponse struct {
 	Segments []Segment       `json:"segments"`
 	Metadata json.RawMessage `json:"metadata"`
+}
+
+type TranscriptionProvider interface {
+	GetVoiceTranscriptions(ctx context.Context, buffer *bytes.Buffer, callID string) (*ASRResponse, error)
 }
 
 type ASRClient struct {
@@ -102,17 +109,43 @@ func (asrClient *ASRClient) GetVoiceTranscriptions(
 func (asrClient *ASRClient) doASRRequest(ctx context.Context, buffer *bytes.Buffer, callID string) ([]byte, error) {
 	var resultBytes []byte
 
+	// Check context before starting retries
+	if ctx.Err() != nil {
+		logging.Logger.Warn("[doASRRequest] Context already canceled before starting request",
+			zap.String("call_id", callID),
+			zap.Error(ctx.Err()),
+		)
+
+		return nil, ctx.Err()
+	}
+
 	err := retry.Do(
 		func() error {
-			reader := bytes.NewReader(buffer.Bytes())
-			opts := []option.RequestOption{
-				option.WithHeader("x-request-id", callID),
+			// Check context before each retry
+			if ctx.Err() != nil {
+				logging.Logger.Warn("[doASRRequest] Context canceled during retry",
+					zap.String("call_id", callID),
+					zap.Error(ctx.Err()),
+				)
+
+				return ctx.Err()
 			}
 
-			resp, err := asrClient.Client.Audio.Transcriptions.New(ctx, openai.AudioTranscriptionNewParams{
-				File:  reader,
-				Model: config.Conf.ASRModel,
-			}, opts...)
+			body, contentType, err := createASRBodyRequest(buffer)
+			if err != nil {
+				return err
+			}
+
+			opts := []option.RequestOption{
+				option.WithHeader("x-request-id", callID),
+				option.WithRequestBody(contentType, body),
+			}
+
+			logging.Logger.Debug("[doASRRequest] Making ASR API call",
+				zap.String("call_id", callID),
+			)
+
+			resp, err := asrClient.Client.Audio.Transcriptions.New(ctx, openai.AudioTranscriptionNewParams{}, opts...)
 			if err != nil {
 				logging.Logger.Error("Transcription request failed",
 					zap.String("call_id", callID),
@@ -145,4 +178,36 @@ func (asrClient *ASRClient) doASRRequest(ctx context.Context, buffer *bytes.Buff
 	}
 
 	return resultBytes, nil
+}
+
+func createASRBodyRequest(buffer *bytes.Buffer) ([]byte, string, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	part, err := writer.CreateFormFile("file", "audio.wav")
+	if err != nil {
+		return nil, "", err
+	}
+
+	_, err = io.Copy(part, bytes.NewReader(buffer.Bytes()))
+	if err != nil {
+		return nil, "", err
+	}
+
+	if config.Conf.ASREmotion {
+		err = writer.WriteField("include", "emotion")
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	err = writer.WriteField("model", config.Conf.ASRModel)
+	if err != nil {
+		return nil, "", err
+	}
+
+	contentType := writer.FormDataContentType()
+	_ = writer.Close()
+
+	return body.Bytes(), contentType, nil
 }

@@ -20,9 +20,15 @@ func main() {
 			logging.Logger.Fatal("failed to create grogu app", zap.String("error", err.Error()))
 		}
 
+		logging.Logger.Info("Grogu app created successfully")
+
+		logging.Logger.Info("Starting app.Run()...")
+
 		err = app.Run(ctx)
 		if err != nil {
-			panic(err)
+			logging.Logger.Fatal("app.Run() returned with error",
+				zap.String("error", err.Error()),
+			)
 		}
 
 		<-ctx.Done()
@@ -30,5 +36,6 @@ func main() {
 		app.HealthCheckerService.Check()
 
 		cancel()
+		logging.Logger.Info("===== App lifecycle iteration complete, restarting loop =====")
 	}
 }
